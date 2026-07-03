@@ -256,3 +256,8 @@ AI Engineering Competition — demonstrating how AI systems can think through co
 ---
 
 **PredictFlow AI** — Making decisions safer, one simulation at a time.
+
+---
+
+> **built by Halima Hafir**
+
