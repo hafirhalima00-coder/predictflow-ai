@@ -2,6 +2,10 @@
 
 > **Simulate Before You Act** — An AI-powered decision simulation platform that predicts consequences before actions are executed.
 
+<p align="center">
+  <video src="public/demo.mp4" controls width="100%" style="max-width: 720px; border-radius: 12px;"></video>
+</p>
+
 ![PredictFlow AI](public/images/predictflow-banner.png)
 
 ## 🧠 Overview
