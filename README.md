@@ -8,7 +8,7 @@
 |---|---|---|
 | **Public repo** | ✅ | [GitHub](https://github.com/hafirhalima00-coder/predictflow-ai) |
 | **Live demo** | ✅ | [predictflow-ai.vercel.app](https://predictflow-ai.vercel.app) |
-| **90-second walkthrough** | See below | [Architecture & Flow](#90-second-walkthrough) |
+| **Demo video** | ✅ | [YouTube](https://youtu.be/pXY8rxCOjys) |
 | **Architecture snapshot** | ✅ | Intent → Simulate → Present → Execute/Rollback |
 | **Failure test** | ✅ | [/failure-test](https://predictflow-ai.vercel.app/failure-test) |
 | **Two-year thesis** | ✅ | [/thesis](https://predictflow-ai.vercel.app/thesis) |
