@@ -5,6 +5,19 @@ import { assessRisk } from "@/services/risk-engine"
 import { compareScenarios } from "@/services/comparison-service"
 import { requiresApproval, createApprovalRequest, reviewApproval } from "@/services/approval-service"
 import { generateReport } from "@/services/report-service"
+import {
+  startExecution,
+  completeExecution,
+  rollbackExecution,
+  createBeforeState,
+  predictSideEffects,
+  generateDiffView,
+  detectSideEffect,
+} from "@/services/execution-service"
+import {
+  monitorExecution,
+  generateFailureReport,
+} from "@/services/safety-net-service"
 import type { SimulationInput, SimulationResult } from "@/lib/types"
 
 const mockInput: SimulationInput = {
@@ -127,5 +140,97 @@ describe("Report Service", () => {
     expect(report.title).toContain("Test Simulation")
     expect(report.sections.length).toBeGreaterThan(0)
     expect(report.summary).toBeTruthy()
+  })
+})
+
+describe("Execution Service", () => {
+  it("should create before state from simulation input", () => {
+    const before = createBeforeState({
+      scenarioType: "delete_records",
+      parameters: { recordCount: 1000 },
+    })
+    expect(before).toBeDefined()
+    expect(before.snapshot).toBeDefined()
+    expect(before.affectedResources.length).toBeGreaterThan(0)
+    expect(before.checksum).toBeTruthy()
+  })
+
+  it("should predict side effects from simulation", async () => {
+    const result = await runSimulation(mockInput)
+    const effects = predictSideEffects(result)
+    expect(effects.length).toBeGreaterThan(0)
+    effects.forEach((e) => {
+      expect(e.id).toBeTruthy()
+      expect(e.description).toBeTruthy()
+      expect(["low", "medium", "high", "critical"]).toContain(e.severity)
+    })
+  })
+
+  it("should start, complete, and rollback execution", async () => {
+    const result = await runSimulation(mockInput)
+    const before = createBeforeState({
+      scenarioType: mockInput.scenarioType,
+      parameters: mockInput.parameters,
+    })
+
+    const execution = startExecution(result.id, "Tester", before)
+    expect(execution.status).toBe("executing")
+
+    const sideEffects = predictSideEffects(result)
+    const completed = completeExecution(execution.id, sideEffects)
+    expect(completed?.status).toBe("completed")
+    expect(completed?.afterState).toBeDefined()
+    expect(completed?.monitoringActive).toBe(true)
+
+    const rollback = rollbackExecution(execution.id)
+    expect(rollback.success).toBe(true)
+  })
+
+  it("should generate diff view between states", async () => {
+    const before = createBeforeState({
+      scenarioType: "send_campaign",
+      parameters: { recipients: 1000 },
+    })
+    const result = await runSimulation(mockInput)
+    const effects = predictSideEffects(result)
+    const exec = startExecution(result.id, "Tester", before)
+    const completed = completeExecution(exec.id, effects)
+
+    const diff = generateDiffView(before, completed?.afterState)
+    expect(diff.length).toBeGreaterThan(0)
+    expect(diff[0]).toHaveProperty("field")
+    expect(diff[0]).toHaveProperty("changed")
+  })
+
+  it("should detect unpredicted side effects", async () => {
+    const result = await runSimulation(mockInput)
+    const before = createBeforeState({
+      scenarioType: mockInput.scenarioType,
+      parameters: mockInput.parameters,
+    })
+    const exec = startExecution(result.id, "Tester", before)
+    completeExecution(exec.id, [])
+
+    const effect = detectSideEffect(exec.id, "Cascading database lock detected")
+    expect(effect).toBeDefined()
+    expect(effect?.detected).toBe(true)
+    expect(effect?.predicted).toBe(false)
+  })
+})
+
+describe("Safety Net Service", () => {
+  it("should monitor execution and detect events", async () => {
+    const result = await runSimulation(mockInput)
+    const safetyResult = monitorExecution("test-exec-id", result)
+    expect(safetyResult).toBeDefined()
+    expect(typeof safetyResult.safe).toBe("boolean")
+    expect(Array.isArray(safetyResult.events)).toBe(true)
+    expect(typeof safetyResult.shouldRollback).toBe("boolean")
+    expect(typeof safetyResult.confidenceInPrediction).toBe("number")
+  })
+
+  it("should generate failure report", async () => {
+    const report = generateFailureReport("nonexistent-id")
+    expect(report).toContain("No failures detected")
   })
 })

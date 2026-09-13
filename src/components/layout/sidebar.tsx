@@ -10,8 +10,9 @@ import {
   FileText,
   ShieldCheck,
   Timeline,
+  AlertTriangle,
+  GraduationCap,
   Bell,
-  Settings,
   Moon,
   Sun,
   Menu,
@@ -34,7 +35,8 @@ const navItems = [
   { href: "/comparison", label: "Comparison", icon: GitCompare },
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/approval", label: "Approvals", icon: ShieldCheck },
-  { href: "/timeline", label: "Timeline", icon: Timeline },
+  { href: "/failure-test", label: "Failure Test", icon: AlertTriangle },
+  { href: "/thesis", label: "Thesis", icon: GraduationCap },
 ]
 
 export function Sidebar() {
